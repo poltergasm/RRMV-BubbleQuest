@@ -62,6 +62,7 @@
         sprite._updated = new Date();
         sprite._travelTime = 0;
         sprite.ehit = false;
+        sprite.opacity = 120;
         obj.addChild(sprite);
         $_Bubbles.push(sprite);
     };
@@ -193,9 +194,9 @@
                             name: $_Params['Collect Bubble Sound'],
                             pan: 0,
                             pitch: 100,
-                            volume: 90
+                            volume: 60
                         });
-
+                        $gameActors.actor(1).gainMp(5);
                         $_Bubbles[this._jailed]._remove = true;
                         this._collected = true;
                         this._enemyAlive = false;
@@ -208,6 +209,8 @@
                             $gameMap.eraseEvent(this._eventId);
                             this.erase();
                         }
+
+                        this.requestAnimation(127);
                     } else {
                         if (this._isFrozen) {
                             if (this._enemyTouching >= 40) {
