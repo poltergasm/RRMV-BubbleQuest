@@ -10,9 +10,20 @@
  * @dir audio/se
  * @require 1
  *
+ * @param Zoom
+ * @desc If you have a plugin that zooms, enter the value here (TODO)
+ * @default 1.0
+ *
  * @param Collect Bubble Sound
  * @desc The SE that plays when you collect a jailed enemy
  * @default Attack3
+ * @type file
+ * @dir audio/se
+ * @require 1
+ *
+ * @param Door Open Sound
+ * @desc The SE that plays when you defeat all enemies in a room that contains a door
+ * @default Door1
  * @type file
  * @dir audio/se
  * @require 1
@@ -52,6 +63,7 @@
     var $_Event = function(id) { return $dataMap.events[id] || false; };
     var $_Tool = function(id) { return $dataWeapons[id]; };
     var $_Bubbles = [];
+    var $_Collected = 0;
 
     var $_ShootBubble = function(obj) {
         var bitmap = ImageManager.loadPicture('bubble');
@@ -139,6 +151,10 @@
         return $_Event(this._eventId).meta.enemy;
     };
 
+    Game_Event.prototype.isDoor = function() {
+        return $_Event(this._eventId).meta.door || false;
+    };
+
     Game_Event.prototype.isButton = function() {
         return $_Event(this._eventId).meta.button;
     };
@@ -163,6 +179,27 @@
     };
 
     Game_Event.prototype.updateAction = function() {
+        var door_num = this.isDoor();
+        if (door_num) {
+            if ($_Collected === Number(door_num)) {
+                if ($_Event(this._eventId).pages.length > 1) {
+                    $_Event(this._eventId).meta = {};
+                    var _mapId = $gameMap._mapId;
+                    $gameSelfSwitches.setValue([_mapId, this._eventId, 'A'], true);
+
+                } else {
+                    $gameMap.eraseEvent(this._eventId);
+                    this.erase();
+                }
+                AudioManager.playSe({
+                    name: $_Params['Door Open Sound'],
+                    pan: 0,
+                    pitch: 100,
+                    volume: 60
+                });
+            }
+        }
+        
         if (this.isEnemy()) {
             if (this._enemyAlive) {
                 if ($_Bubbles.length > 0) {
@@ -210,7 +247,8 @@
                             this.erase();
                         }
 
-                        this.requestAnimation(127);
+                        // param??
+                        //this.requestAnimation(127);
                     } else {
                         if (this._isFrozen) {
                             if (this._enemyTouching >= 40) {
@@ -243,6 +281,7 @@
         this.addWindow(this._healthBar);
         this.addWindow(this._skillBox);
         $_Bubbles = [];
+        $_Collected = 0;
     };
 
     function _shootFireball(_skill) {
@@ -325,6 +364,7 @@
                                 pitch: 100,
                                 volume: 90
                             });
+                            $_Collected += 1;
                         } else {
                             var _toolId = $_Actor()._equips[0]._itemId;
                             evt.obj.requestAnimation($_Tool(_toolId).animationId);
